@@ -24,14 +24,6 @@ def generate_launch_description():
     xacro_file = os.path.join(get_package_share_directory(pkg_name),file_subpath)
     robot_description_raw = xacro.process_file(xacro_file).toxml()
 
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare("ros2_control_demo_3r_robot"),
-            "config",
-            "myrobot_controllers.yaml",
-        ]
-    )
-
     # Configure the node
     node_robot_state_publisher = Node(
         package='robot_state_publisher',
@@ -60,13 +52,6 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[{'robot_description': robot_description_raw}, robot_controllers],
-
-        output="both",
-    )
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner.py",
@@ -81,8 +66,7 @@ def generate_launch_description():
         node_robot_state_publisher,
         spawn_entity,
         joint_state_broadcaster_spawner,
-        robot_controller_spawner,
-        control_node
+        robot_controller_spawner
     ])
 
 
