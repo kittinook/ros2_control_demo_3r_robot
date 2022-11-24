@@ -8,48 +8,37 @@ import sys, os, yaml
 from rclpy.node import Node
 from builtin_interfaces.msg import Duration
 from trajectory_msgs.msg import JointTrajectory , JointTrajectoryPoint
+from std_msgs.msg import Float64MultiArray
 
 class Trajectory_publisher(Node):
 
     def __init__(self):
         super().__init__('trajectory_publsiher_node')
-        publish_topic = "/joint_trajectory_position_controller/joint_trajectory"
-        self.trajectory_publihser = self.create_publisher(JointTrajectory,publish_topic, 10)
+        # publish_topic = "/joint_trajectory_position_controller/joint_trajectory"
+        publish_topic = "/velocity_controllers/commands"
+        self.vel_command_publihser = self.create_publisher(Float64MultiArray,publish_topic, 10)
         timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.joints = ['joint_1','joint_2','joint_3']
-        self.start_positions = [0.0,0.0,0.0]
-        self.goal_positions = [0.5,0.50,0.5]
-        self.setpoint_position = self.start_positions
+        self.speed_1 = [0.1,0.1,0.1]
+        self.speed_2 = [-0.1,-0.1,-0.1]
+        self.current_speed = self.speed_1
         self.is_change_point = False
         self.i = 0
 
 
     def timer_callback(self):
-
         self.i = self.i + 1
         if self.i == 30:
             self.i = 0
             if self.is_change_point == False:
                 self.is_change_point = True
-                self.setpoint_position = self.start_positions
+                self.current_speed = self.speed_1
             else:
                 self.is_change_point = False
-                self.setpoint_position = self.goal_positions
-
-        bazu_trajectory_msg = JointTrajectory()
-        bazu_trajectory_msg.joint_names = self.joints
-        ## creating a point
-        point = JointTrajectoryPoint()
-        point.positions = self.setpoint_position
-        point.time_from_start = Duration(sec=1)
-        ## adding newly created point into trajectory message
-        bazu_trajectory_msg.points.append(point)
-        # point.positions = self.goal_positions
-        # point.time_from_start = Duration(sec=8)
-        # bazu_trajectory_msg.points.append(point)
-        self.trajectory_publihser.publish(bazu_trajectory_msg)
-        print(self.setpoint_position)
+                self.current_speed = self.speed_2
+        command = Float64MultiArray()
+        command.data = self.current_speed
+        self.vel_command_publihser.publish(command)
  
 def main(args=None):
     rclpy.init(args=args)
